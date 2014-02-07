@@ -1,15 +1,12 @@
 :-use_module(library(lists)).
 
-test(L) :-
-    tuple_calc([t,u],
-    and(in(t,pc), and(in(u,pc), and(eq(attr(t,speed), attr(u,speed)),
-    neg(eq(attr(t,model), attr(u,model)))))),
+% works
+test2(L) :-
+    calc([[t,model]], 
+    and(in(t,simple), exist(u, and(in(u,simple), gt(attr(u,speed), attr(t,speed))))), 
     L).
 
 % works
-test2(L) :-
-    calc([[t,model]], in(t,simple), L).
-
 test3(L) :-
     tuple_calc([t,u],
     and(in(t,pc), and(in(u,pc), neg(eq(attr(t,model), attr(u,model))))),
@@ -19,10 +16,17 @@ test3(L) :-
 testA(L) :-
     calc([[t,model]], and(in(t,pc), geq(attr(t,speed), 3.00)), L).
 
+% works
+testF(L) :-
+    calc([[t,hd]], and(in(t,pc), exist(u, and(in(u,pc),
+    and(neg(eq(attr(t,model), attr(u,model))), eq(attr(t,hd), attr(u,hd)))))),
+    L).
+
 calc(Output, Formula, OutSet) :-
     maplist(head, Output, OutVars),
     tuple_calc(OutVars, Formula, BindSet),
-    clean_outer(Output, BindSet, OutSet).
+    clean_outer(Output, BindSet, DupSet),
+    remove_dups(DupSet, OutSet).
 
 clean_outer(_, [], []).
 
@@ -36,13 +40,13 @@ clean_inner([], _, []).
 clean_inner([[T, []]|R], BindSet, OutSet) :-
     findall(X, member([T,X],BindSet),Temp),
     maplist(last, Temp, Tuples),
-    clean(R, BindSet, Res),
+    clean_inner(R, BindSet, Res),
     append(Res, Tuples, OutSet).
 
 clean_inner([[T, A]|R], BindSet, OutSet) :-
     findall(X, member([T,X], BindSet), Temp),
     attr_clean(Temp, A, Filt),
-    clean(R, BindSet, Res),
+    clean_inner(R, BindSet, Res),
     append(Res, Filt, OutSet).
 
 attr_clean([], _, []).
@@ -76,6 +80,9 @@ bind(Bound, Bindings, and(F1, F2), Res) :-
 bind(Bound, Bindings, or(F1, F2), Res) :-
     bind(Bound, Bindings, F1, Res);
     bind(Bound, Bindings, F2, Res).
+
+bind(Bound, Bindings, exist(U,F), Bindings) :-
+    bind([U|Bound], Bindings, F, _). 
 
 bind(Bound, Bindings, in(T, S), [[T,[A,X]]|Bindings]) :-
     member(T,Bound),
@@ -129,13 +136,14 @@ attr(Bindings, T, Attribute, Value) :-
     nth0(N, A, Attribute),
     nth0(N, X, Value). 
 
-schema(simple, [model, speed]).
+schema(simple, [model, speed, hd]).
 schema(pc, [model, speed, ram, hd, price]).
 
 tuples(simple,
     [
-       ['Hal', 100]
-    ,  ['Intel', 200]
+       ['Hal', 100, 20]
+    ,  ['Intel', 200, 20]
+    ,  ['Haswell', 200, 30]
     ]).
 
 tuples(pc, 
