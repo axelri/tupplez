@@ -22,6 +22,12 @@ testF(L) :-
     and(neg(eq(attr(t,model), attr(u,model))), eq(attr(t,hd), attr(u,hd)))))),
     L).
 
+% works
+testI(L) :-
+    calc([[t,model]], 
+    and(in(t,pc), neg(exist(u, and(in(u,pc), gt(attr(u,speed), attr(t,speed)))))),
+    L).
+
 calc(Output, Formula, OutSet) :-
     maplist(head, Output, OutVars),
     tuple_calc(OutVars, Formula, BindSet),
