@@ -32,7 +32,16 @@ calc(Output, Formula, OutSet) :-
     maplist(head, Output, OutVars),
     tuple_calc(OutVars, Formula, BindSet),
     clean_outer(Output, BindSet, DupSet),
+    % set semantics
     remove_dups(DupSet, OutSet).
+
+%% clean_outer(+OutPutVars, +BindingSet, ?BagSolution)
+%
+%  extracts the relevant attributes from the tuple
+%  and produces a bag semantics result
+%  Cleans every solution subset of tuples t,u ...
+%  in order
+%  
 
 clean_outer(_, [], []).
 
@@ -64,10 +73,9 @@ attr_clean([[Attr,X]|T], A, [Value|Res]) :-
 
 %% tuple_calc(+OutputSet, +Formula, ?SolutionSet)
 %
-% ex tuple_calc([[t,model],
-%               and(in(pc,t), and(geq(attr(t,speed), 3)))
-%               SolSet).
-
+%  calculates the solution set of tuples from the 
+%  formula and output variable set
+%
 
 tuple_calc(OutVars, Formula, BindSet) :-
     findall(Re, bind(OutVars,[],Formula,Re), BindSet).
