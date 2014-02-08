@@ -14,7 +14,7 @@ test3(L) :-
 
 % works
 testA(L) :-
-    calc([[t,model]], and(in(t,pc), geq(attr(t,speed), 3.00)), L).
+    calc([[t,model],[t,speed]], and(in(t,pc), geq(attr(t,speed), 3.00)), L).
 
 % works
 testF(L) :-
@@ -24,8 +24,12 @@ testF(L) :-
 
 % works
 testI(L) :-
-    calc([[t,model]], 
-    and(in(t,pc), neg(exist(u, and(in(u,pc), gt(attr(u,speed), attr(t,speed)))))),
+    calc([[t,maker]], 
+    and(in(t,product), 
+    exist(x, and(in(x,pc), 
+    and(eq(attr(x,model), attr(t,model)),
+    neg(exist(y, and(in(y,pc),
+    gt(attr(y,speed), attr(x,speed))))))))),
     L).
 
 calc(Output, Formula, OutSet) :-
@@ -45,18 +49,11 @@ calc(Output, Formula, OutSet) :-
 
 clean_outer(_, [], []).
 
-clean_outer(Output, [H|T], Out) :-
+clean_outer(Output, [H|T], [RInner|ROuter]) :-
     clean_inner(Output, H, RInner),
-    clean_outer(Output, T, ROuter),
-    append(RInner, ROuter, Out).
+    clean_outer(Output, T, ROuter).
 
 clean_inner([], _, []).
-
-clean_inner([[T, []]|R], BindSet, OutSet) :-
-    findall(X, member([T,X],BindSet),Temp),
-    maplist(last, Temp, Tuples),
-    clean_inner(R, BindSet, Res),
-    append(Res, Tuples, OutSet).
 
 clean_inner([[T, A]|R], BindSet, OutSet) :-
     findall(X, member([T,X], BindSet), Temp),
@@ -152,6 +149,7 @@ attr(Bindings, T, Attribute, Value) :-
 
 schema(simple, [model, speed, hd]).
 schema(pc, [model, speed, ram, hd, price]).
+schema(product, [maker, model, type]).
 
 tuples(simple,
     [
@@ -175,4 +173,21 @@ tuples(pc,
     ,   [1011, 1.86, 2048, 300, 770]
     ,   [1012, 2.80, 1024, 160, 649]
     ,   [1013, 3.06, 512, 80, 529]
+    ]).
+
+tuples(product,
+    [
+        ['A', 1001, 'pc']
+    ,   ['A', 1002, 'pc']
+    ,   ['A', 1003, 'pc']
+    ,   ['B', 1004, 'pc']
+    ,   ['B', 1005, 'pc']
+    ,   ['B', 1006, 'pc']
+    ,   ['C', 1007, 'pc']
+    ,   ['D', 1008, 'pc']
+    ,   ['D', 1009, 'pc']
+    ,   ['D', 1010, 'pc']
+    ,   ['E', 1011, 'pc']
+    ,   ['E', 1012, 'pc']
+    ,   ['E', 1013, 'pc']
     ]).
